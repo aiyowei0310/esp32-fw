@@ -1,0 +1,19 @@
+# 微雪 ESP32-S3-Touch-LCD-4 (V4.0, N16R8) — MCU 基础配置
+# 屏幕引脚/初始化不在这里配置，全部放 Python 运行时（panel/ 目录），
+# 这样调屏参数不用重新编译固件。
+[MCU.esp32]
+BOARD = "ESP32_GENERIC_S3"
+BOARD_VARIANT = "SPIRAM_OCT"
+flash_size = 16
+enable_jtag_repl = 'n'
+enable_cdc_repl = 'y'
+enable_uart_repl = 'n'
+CONFIG_FREERTOS_HZ = 1000
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240 = "y"
+CONFIG_ESPTOOLPY_FLASHMODE_QIO = "y"
+CONFIG_ESPTOOLPY_FLASHFREQ_80M = "y"
+CONFIG_SPIRAM_SPEED_120M = "y"
+CONFIG_SPIRAM_FETCH_INSTRUCTIONS = "y"
+CONFIG_SPIRAM_RODATA = "y"
+CONFIG_ESP32S3_DATA_CACHE_LINE_64B = "y"
+CONFIG_COMPILER_OPTIMIZATION_PERF = "y"

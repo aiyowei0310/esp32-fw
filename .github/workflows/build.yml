@@ -43,17 +43,18 @@ jobs:
         shell: bash
         run: |
           set -x
-          ls -la
-          BIN=$(find lvgl_micropython -name "*.bin" -path "*build*" | head -3)
-          echo "candidates: $BIN"
-          FIRST=$(echo "$BIN" | head -1)
-          if [ -n "$FIRST" ]; then
-            cp "$FIRST" firmware.bin
-            ls -l firmware.bin
-          else
-            echo "NO FIRMWARE FOUND"
-            find lvgl_micropython -maxdepth 4 -name "*.bin" | head -20
+          ls -l lvgl_micropython/build/ || true
+          # 只认 builder 打好的合并镜像，绝不按 *build* 模糊匹配（会抓到几十字节的碎片）
+          BIN=$(ls -S lvgl_micropython/build/lvgl_micropy_*.bin 2>/dev/null | head -1)
+          if [ -z "$BIN" ]; then
+            BIN=$(find lvgl_micropython/build -maxdepth 2 -name "*.bin" -size +1M | head -1)
           fi
+          echo "picked: $BIN"
+          [ -n "$BIN" ] || { echo "NO FIRMWARE FOUND"; exit 1; }
+          cp "$BIN" firmware.bin
+          SIZE=$(stat -c%s firmware.bin)
+          echo "firmware.bin = $SIZE bytes"
+          [ "$SIZE" -gt 1000000 ] || { echo "SUSPICIOUSLY SMALL FIRMWARE"; exit 1; }
 
       - name: Upload artifact
         if: always()

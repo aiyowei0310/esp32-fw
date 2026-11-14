@@ -20,37 +20,53 @@ jobs:
           python-version: '3.12'
 
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build python3-pip
+
+      - name: Install python packages for the builder
+        run: pip install toml
 
       - name: Clone lvgl_micropython
         run: git clone --recursive --depth 1 https://github.com/kdschlosser/lvgl_micropython.git
 
       - name: Build firmware
+        shell: bash
         run: |
+          set -o pipefail
           cd lvgl_micropython
-          python3 make.py esp32 BOARD=ESP32_GENERIC_S3 BOARD_VARIANT=SPIRAM_OCT \
-            DISPLAY=rgb_display INDEV=gt911 \
-            --toml=../config/lcd4_mcu.toml 2>&1 | tee build_log.txt
+          python3 make.py --toml=../config/lcd4_mcu.toml 2>&1 | tee ../build_log.txt
 
       - name: Locate firmware
+        if: always()
         id: fw
+        shell: bash
         run: |
-          BIN=$(find . -name "*.bin" -path "*build*" | sort | head -1)
-          echo "Found: $BIN"
-          [ -n "$BIN" ] || { echo "NO FIRMWARE FOUND"; find . -maxdepth 3 -name "*.bin"; exit 1; }
-          cp "$BIN" firmware.bin
-          cp lvgl_micropython/build_log.txt build_log.txt 2>/dev/null || true
-          echo "dir=$(pwd)" >> $GITHUB_OUTPUT
+          set -x
+          ls -la
+          BIN=$(find lvgl_micropython -name "*.bin" -path "*build*" | head -3)
+          echo "candidates: $BIN"
+          FIRST=$(echo "$BIN" | head -1)
+          if [ -n "$FIRST" ]; then
+            cp "$FIRST" firmware.bin
+            ls -l firmware.bin
+          else
+            echo "NO FIRMWARE FOUND"
+            find lvgl_micropython -maxdepth 4 -name "*.bin" | head -20
+          fi
 
       - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: build-output
           path: |
             firmware.bin
             build_log.txt
+          if-no-files-found: warn
 
       - name: Publish to release
+        if: hashFiles('firmware.bin') != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: fw

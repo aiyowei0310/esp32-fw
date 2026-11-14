@@ -35,7 +35,8 @@ jobs:
         run: |
           set -o pipefail
           cd lvgl_micropython
-          python3 make.py --toml=../config/lcd4_mcu.toml 2>&1 | tee ../build_log.txt
+          python3 make.py --toml=../config/lcd4_mcu.toml \
+            DISPLAY=rgb_display INDEV=gt911 2>&1 | tee ../build_log.txt
 
       - name: Locate firmware
         if: always()

@@ -30,6 +30,14 @@ jobs:
       - name: Clone lvgl_micropython
         run: git clone --recursive --depth 1 https://github.com/kdschlosser/lvgl_micropython.git
 
+      - name: Install custom fonts into LVGL source
+        run: |
+          cp fonts/lv_font_simhei_24.c lvgl_micropython/lib/lvgl/src/font/
+          cp fonts/lv_font_num_56.c lvgl_micropython/lib/lvgl/src/font/
+          sed -i 's/^#define LV_FONT_CUSTOM_DECLARE *$/#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(lv_font_simhei_24) LV_FONT_DECLARE(lv_font_num_56)/' lvgl_micropython/lib/lv_conf.h
+          grep -n "LV_FONT_CUSTOM_DECLARE" lvgl_micropython/lib/lv_conf.h | head -2
+          ls -l lvgl_micropython/lib/lvgl/src/font/lv_font_simhei_24.c lvgl_micropython/lib/lvgl/src/font/lv_font_num_56.c
+
       - name: Build firmware
         shell: bash
         run: |
